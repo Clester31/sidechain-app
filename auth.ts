@@ -10,6 +10,8 @@ export const signUpWithEmail = async (email: string, username: string, password:
         await setDoc(doc(db, "users", user.uid), {
             username,
             email: user.email,
+            profileImage: '/profile.jpg',
+            songs: [],
         });
 
     } catch (error) {
@@ -34,6 +36,8 @@ export const signInWithGoogle = async () => {
       await setDoc(doc(db, "users", user.uid), {
         username: `${user.displayName.split(' ').join('')}${Math.floor(Math.random() * 900) + 100}`,
         email: user.email,
+        profileImage: '/profile.jpg',
+        songs: [],
       });
       return user;
     } catch (error) {

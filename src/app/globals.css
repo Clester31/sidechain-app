@@ -1,21 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg_main: #121520;
+  --bg_blue1: #22283b;
+  --bg_blue2: #3a506b;
+  --bg_teal1: #5bc0be;
+  --bg_teal2: #6fffe9;
+  --foreground: #ffffff;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: #fff;
+  background: var(--bg_main);
+  font-family: 'Nunito', Helvetica, sans-serif;
 }

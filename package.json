@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@firebase/storage": "^0.13.4",
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "firebase": "^11.1.0",
     "next": "15.1.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-toastify": "^11.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -8,8 +8,21 @@ export default {
   ],
   theme: {
     extend: {
+      keyframes: {
+        'grow-height': {
+          '0%': { maxHeight: '0' },
+          '100%': { maxHeight: '200px' }  // Adjust this value based on your needs
+        }
+      },
+      animation: {
+        'grow-height': 'grow-height 0.25s ease-out forwards'
+      },
       colors: {
-        background: "var(--background)",
+        bg_main: "var(--bg_main)",
+        bg_blue1: "var(--bg_blue1)",
+        bg_blue2: "var(--bg_blue2)",
+        bg_teal1: "var(--bg_teal1)",
+        bg_teal2: "var(--bg_teal2)",
         foreground: "var(--foreground)",
       },
     },
