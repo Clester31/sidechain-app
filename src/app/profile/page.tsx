@@ -1,18 +1,19 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, ChangeEvent } from "react"
 import { useAuth } from "../lib/AuthContext"
-import { db } from "../../../firebaseConfig";
+import { db, storage } from "../../../firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
 import { Bounce, ToastContainer, toast } from 'react-toastify';
 import Image from "next/image";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "@firebase/storage";
 
 export default function Profile() {
     const { user } = useAuth();
     const [currentUsername, setCurrentUsername] = useState<string>();
-    const [currentProfilePicture, setCurrentProfilePicture] = useState<string>();
-    const [newProfilePicture, setNewProfilePicture] = useState<string>();
+    const [newProfilePicture, setNewProfilePicture] = useState<File | null>(null);
+    const [newProfileBanner, setNewProfileBanner] = useState<File | null>(null);
     const [newUsername, setNewUsername] = useState<string>();
     const [userSongs, setUserSongs] = useState([]);
 
@@ -22,7 +23,6 @@ export default function Profile() {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     setCurrentUsername(userDoc.data().username);
-                    setCurrentProfilePicture(userDoc.data().profileImage)
                     const fetchedSongs = await fetchUserSongs(user.uid);
                     setUserSongs(fetchedSongs);
                 }
@@ -43,16 +43,65 @@ export default function Profile() {
             transition: Bounce,
         });
     }
+    
+    const updateNewProfileImage = async (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            setNewProfilePicture(event.target.files[0]);
+        }
+    }
 
-    const changeProfilePicture = async () => {
+    const updateNewBanner = async (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            setNewProfileBanner(event.target.files[0]);
+        }
+    }
+
+    const ChangeProfileImage = async () => {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const currentImageUrl = userDoc.data()?.profileImage;
+
+        if (currentImageUrl) {
+            const oldImageRef = ref(storage, currentImageUrl);
+            await deleteObject(oldImageRef);
+        }
+
+        const imageStorageRef = ref(storage, `profilePictures/${newProfilePicture.name}`);
+        await uploadBytes(imageStorageRef, newProfilePicture);
+        const imgUrl = await getDownloadURL(imageStorageRef);
+
         const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, { profileImage: newProfilePicture });
-        toast.success("Profile Pciture Updated", {
+        await updateDoc(userRef, { profileImage: imgUrl });
+
+        toast.success("Profile Picture Updated", {
             position: "top-right",
             theme: "dark",
             transition: Bounce,
         });
     }
+
+    const ChangeProfileBanner = async () => {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const currentBannerUrl = userDoc.data()?.profileBanner;
+
+        if (currentBannerUrl) {
+            const oldBannerRef = ref(storage, currentBannerUrl);
+            await deleteObject(oldBannerRef);
+        }
+
+        const imageStorageRef = ref(storage, `profileBanners/${newProfileBanner.name}`);
+        await uploadBytes(imageStorageRef, newProfileBanner);
+        const imgUrl = await getDownloadURL(imageStorageRef);
+
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, { profileBanner: imgUrl });
+
+        toast.success("Profile Banner Updated", {
+            position: "top-right",
+            theme: "dark",
+            transition: Bounce,
+        });
+    }
+
 
     const fetchUserSongs = async (userId: string) => {
         try {
@@ -106,18 +155,37 @@ export default function Profile() {
                         <button onClick={changeUsername} className="bg-green-500 p-2 rounded-xl">Change</button>
                     }
                 </div>
-
-            </div>
-            <div>
-                <h2>My Uploads</h2>
-                <div className="songs-grid">
-                    {userSongs.map(song => (
-                        <div key={song.id} className="song-card">
-                            <h3>{song.title}</h3>
-                            <p>{song.description}</p>
-                            <audio controls src={song.audioUrl} />
-                        </div>
-                    ))}
+                <div className="flex flex-row gap-4 items-center">
+                    <h1>Change Profile Picture</h1>
+                    <input
+                        name="profileImage"
+                        type="file"
+                        accept="image/jpeg"
+                        onChange={updateNewProfileImage}
+                    />
+                    <button
+                        onClick={ChangeProfileImage}
+                        className="bg-green-500 p-2 rounded-xl"
+                        disabled={!newProfilePicture}
+                    >
+                        Update
+                    </button>
+                </div>
+                <div className="flex flex-row gap-4 items-center">
+                    <h1>Change Profile Banner</h1>
+                    <input
+                        name="profileBanner"
+                        type="file"
+                        accept="image/jpeg"
+                        onChange={updateNewBanner}
+                    />
+                    <button
+                        onClick={ChangeProfileBanner}
+                        className="bg-green-500 p-2 rounded-xl"
+                        disabled={!newProfileBanner}
+                    >
+                        Update
+                    </button>
                 </div>
             </div>
         </div>

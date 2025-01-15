@@ -1,10 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client"
 
+
 import { useState, useRef, ChangeEvent } from "react";
 import { storage, db } from '../../../firebaseConfig'
 import { uploadBytes, ref, getDownloadURL } from "@firebase/storage";
-import { addDoc, updateDoc, arrayUnion, doc, collection } from "firebase/firestore";
+import { addDoc, updateDoc, arrayUnion, doc, collection, getDoc } from "firebase/firestore";
 import { useAuth } from "../lib/AuthContext";
 
 export default function Upload() {
@@ -18,6 +19,7 @@ export default function Upload() {
 
     const [songTitle, setSongTitle] = useState<string>("");
     const [songDesc, setSongDesc] = useState<string>("");
+    const [songTags, setSongTags] = useState<string>("");
 
     const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
@@ -46,20 +48,35 @@ export default function Upload() {
             const imgUrl = await getDownloadURL(imageStorageRef);
             setImageURL(imgUrl);
 
-            const audioFileRef = await addDoc(collection(db, "audioFiles"), {
+            const splitTags = songTags.split(',').map(tag => tag.trim());
+
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+
+            const songData = {
                 title: songTitle,
                 description: songDesc,
                 audioUrl: url,
                 imageUrl: imgUrl,
-                uploadedBy: user.uid,
+                uploadedBy: userDoc.data()?.username,
+                uploaderId: user?.uid,
                 uploadDate: new Date(),
+                tags: splitTags,
                 comments: [],
-                likes: 0
-            })
+                likes: 0,
+                resposts: 0,
+            };
 
-            const userRef = doc(db, "users", user.uid);
-            await updateDoc(userRef, {
-                songs: arrayUnion(audioFileRef.id)
+            const audioFileRef = await addDoc(collection(db, "audioFiles"), songData);
+            
+            await updateDoc(doc(db, "users", user?.uid), {
+                songs: arrayUnion({
+                    ...songData,
+                    id: audioFileRef.id
+                }),
+                allContent: arrayUnion({
+                    ...songData,
+                    id: audioFileRef.id
+                })
             });
 
         } catch (error) {
@@ -88,11 +105,14 @@ export default function Upload() {
                     disabled={isUploading}
                     onChange={handleImageSelect}
                 />
+                
 
                 <label htmlFor="songTitle">Title</label>
                 <input className="text-black" name="songTitle" type="text" onChange={(e) => setSongTitle(e.target.value)} />
                 <label htmlFor="songTitle">Description</label>
                 <input className="text-black" name="songDesc" type="text" onChange={(e) => setSongDesc(e.target.value)} />
+                <label htmlFor="songTags">Tags (separate with comma)</label>
+                <input className="text-black" name="songTags" type="text" onChange={(e) => setSongTags(e.target.value)} />
 
                 <button
                     onClick={handleUpload}
@@ -109,7 +129,6 @@ export default function Upload() {
                             <source src={audioURL} type="audio/mpeg" />
                             Your browser does not support the audio element.
                         </audio>
-                        <img src={imageURL} alt="song cover" />
                     </div>
                 )}
             </div>

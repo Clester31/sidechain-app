@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { doc } from "firebase/firestore";
@@ -20,7 +21,9 @@ export default function Navbar() {
             if (user) {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
-                    setProfileImage(userDoc.data().profileImage);
+                    const imageUrl = userDoc.data().profileImage;
+                    console.log('profile image link', imageUrl);
+                    setProfileImage(imageUrl);
                 }
             }
         }
@@ -34,29 +37,44 @@ export default function Navbar() {
                 <Image onClick={() => router.push('/')} className="cursor-pointer hover:scale-110 transition 500" src='/sidechain_icon.png' width={48} height={48} alt={'Sidechain Logo'} />
             </div>
             <div className="flex justify-center gap-4">
-                <button className="py-2 px-6 flex justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"><i className="fa-solid fa-shuffle"></i></button>
-                <input placeholder="search for songs" type="text" className="rounded-2xl w-96 h-8 bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 px-8 py-2 text-center" />
                 <button 
-                className="py-2 px-6 flex justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                onClick={() => router.push('/')}
+                >My Shuffle</button>
+                <button 
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                onClick={() => router.push('/search')}
+                >Search</button>
+                
+                <button 
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
                 onClick={() => router.push('/upload')}
-                ><i className="fa-solid fa-plus"></i></button>
+                >Upload</button>
+                <button 
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                onClick={() => router.push(`user/${user.uid}`)}
+                >My Songs</button>
             </div>
             <div className="w-1/6 flex justify-end">
-                {
-                user ? 
-                    <Image onClick={() => setShowProfileWidget(!showProfileWidget)} className="cursor-pointer rounded-full border-4 border-bg_teal1 hover:border-bg_teal2 transition 250" src={profileImage} width={48} height={48} alt="profile picture" />
-                :
-                    <button 
-                    className="border-bg_teal1 px-4 py-1 border-2 rounded-2xl bg-bg_blue2 hover:bg-bg_teal1 hover:border-bg_teal2 hover:text-black transition 250"
-                    onClick={() => router.push('./login')}
+                {user ? (
+                    <img
+                        onClick={() => setShowProfileWidget(!showProfileWidget)}
+                        className="cursor-pointer rounded-full border-4 border-bg_teal1 hover:border-bg_teal2 transition 250 w-12 h-12 object-cover"
+                        src={profileImage}
+                        alt="profile picture"
+                    />
+                ) : (
+                    <button
+                        className="border-bg_teal1 px-4 py-1 border-2 rounded-2xl bg-bg_blue2 hover:bg-bg_teal1 hover:border-bg_teal2 hover:text-black transition 250 ease-in-out"
+                        onClick={() => router.push('./login')}
                     >
                         Log in / Sign Up
                     </button>
-                }
+                )}
             </div>
             <div className="absolute right-0">
                 {
-                    showProfileWidget && <UserSettingsWidget />
+                    showProfileWidget && <UserSettingsWidget setShowProfileWidget={setShowProfileWidget} />
                 }
             </div>
         </div>

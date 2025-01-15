@@ -8,13 +8,50 @@
   --bg_main: #121520;
   --bg_blue1: #22283b;
   --bg_blue2: #3a506b;
-  --bg_teal1: #5bc0be;
+  --bg_teal1: #378cbd;
   --bg_teal2: #6fffe9;
   --foreground: #ffffff;
+
+  --rhap_theme-color: var(--bg_teal1);
+  --rhap_theme-color-2: var(--bg_teal2);
+  --rhap_background-color: var(--bg_blue1);
+  --rhap_bar-color: var(--bg_blue2);
+  --rhap_time-color: var(--foreground);
+  --rhap_font-family: 'Nunito', Helvetica, sans-serif;
 }
 
 body {
   color: #fff;
   background: var(--bg_main);
   font-family: 'Nunito', Helvetica, sans-serif;
+}
+
+.rhap_container {
+  background-color: var(--rhap_background-color) !important;
+  box-shadow: none !important;
+  border-image: linear-gradient(to right, var(--bg_teal1), var(--bg_teal2) 100%) 1;
+  border-width: 2px;
+}
+
+.rhap_time {
+  color: var(--rhap_time-color) !important;
+  font-family: var(--rhap_font-family) !important;
+}
+
+.rhap_main-controls-button,
+.rhap_volume-button,
+.rhap_repeat-button {
+  color: var(--rhap_theme-color-2) !important;
+}
+
+.rhap_progress-filled,
+.rhap_progress-indicator,
+.rhap_volume-indicator,
+.rhap_volume-filled {
+  background-color: var(--rhap_theme-color-2) !important;
+}
+
+.rhap_progress-bar,
+.rhap_volume-bar {
+  background-color: var(--rhap_bar-color) !important;
 }

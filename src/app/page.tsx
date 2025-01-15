@@ -10,6 +10,8 @@ import { useEffect } from "react";
 
 import { Song } from "./types";
 import { getDownloadURL, getStorage, listAll, ref } from "@firebase/storage";
+import 'react-h5-audio-player/lib/styles.css';
+import SongBox from "./components/SongBox";
 
 export default function Home() {
 
@@ -43,18 +45,27 @@ export default function Home() {
             const querySnapshot = await getDocs(q);
 
             let metadata = {};
+            let docId = '';
             if (!querySnapshot.empty) {
               metadata = querySnapshot.docs[0].data();
+              docId = querySnapshot.docs[0].id; // Get the actual Firestore document ID
             }
 
             return {
+              id: docId, // Use the actual Firestore document ID
               name: item.name,
               title: metadata.title || "null",
-              url: url,
+              audioUrl: url,
               path: item.fullPath,
-              image: metadata.imageUrl || './profile.jpg',
+              imageUrl: metadata.imageUrl || './profile.jpg',
               description: metadata.description || "null",
               uploadedBy: metadata.uploadedBy || "null",
+              uploaderId: metadata.uploaderId || "null",
+              uploadDate: metadata.uploadDate || "null",
+              comments: metadata.comments || [],
+              likes: metadata.likes || 0,
+              reposts: metadata.reposts || 0,
+              tags: metadata.tags || [],
             };
           })
         );
@@ -72,7 +83,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col justify-center items-center">
-      <div className="p-8 w-3/5 flex flex-col">
+      <div className="p-8 flex flex-col w-screen justify-center m-auto items-center">
         {
           !user ?
             <div>
@@ -82,18 +93,9 @@ export default function Home() {
             :
             <h1 className="text-2xl text-center">Hello, {username}</h1>
         }
-        <div className="song-listing flex flex-col">
+        <div className="song-listing flex flex-col w-3/5">
           {shuffle.map((song) => (
-            <div className="flex flex-row bg-bg_blue1 px-32 py-2 my-4 rounded-xl items-center justify-center gap-4" key={song.path}>
-              <div>
-                <img width={'128px'} height={'128px'} src={song.image} alt="album cover"/>
-              </div>
-              <div>
-                <p>{song.title}</p>
-                <p>{song.description}</p>
-                <audio controls src={song.url} />
-              </div>
-            </div>
+            <SongBox key={song.id} song={song} />
           ))}
         </div>
       </div>
