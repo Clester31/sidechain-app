@@ -45,12 +45,14 @@ export default function Search() {
                 </form>
                 <div className="song-listing flex flex-col w-3/5">
                     {
-                        searchedSongs.length > 0 &&
+                        searchedSongs.length > 0 ?
                         searchedSongs.map((song) => {
                             return (
-                                <SongBox key={song.id} song={song} />
+                                <SongBox key={song.id} songId={song.id} />
                             )
                         })
+                        :
+                        <h1 className="m-auto mt-8 text-xl">No Songs Found</h1>
                     }
                 </div>
 

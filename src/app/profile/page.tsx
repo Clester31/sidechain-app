@@ -6,16 +6,14 @@ import { db, storage } from "../../../firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
 import { getDoc } from "firebase/firestore";
 import { Bounce, ToastContainer, toast } from 'react-toastify';
-import Image from "next/image";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "@firebase/storage";
 
 export default function Profile() {
-    const { user } = useAuth();
+    const { user } = useAuth() as { user: { uid: string } | null };
     const [currentUsername, setCurrentUsername] = useState<string>();
     const [newProfilePicture, setNewProfilePicture] = useState<File | null>(null);
     const [newProfileBanner, setNewProfileBanner] = useState<File | null>(null);
     const [newUsername, setNewUsername] = useState<string>();
-    const [userSongs, setUserSongs] = useState([]);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
@@ -23,8 +21,6 @@ export default function Profile() {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     setCurrentUsername(userDoc.data().username);
-                    const fetchedSongs = await fetchUserSongs(user.uid);
-                    setUserSongs(fetchedSongs);
                 }
             }
         };
@@ -32,6 +28,8 @@ export default function Profile() {
     }, [user]);
 
     const changeUsername = async () => {
+        if (!user || !newProfilePicture) return;
+        
         const userRef = doc(db, "users", user.uid);
         await updateDoc(userRef, { username: newUsername });
         setCurrentUsername(newUsername);
@@ -43,7 +41,7 @@ export default function Profile() {
             transition: Bounce,
         });
     }
-    
+
     const updateNewProfileImage = async (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             setNewProfilePicture(event.target.files[0]);
@@ -57,13 +55,17 @@ export default function Profile() {
     }
 
     const ChangeProfileImage = async () => {
+        if (!user || !newProfilePicture) return;
+
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const currentImageUrl = userDoc.data()?.profileImage;
 
-        if (currentImageUrl) {
-            const oldImageRef = ref(storage, currentImageUrl);
-            await deleteObject(oldImageRef);
-        }
+        console.log(currentImageUrl);
+
+        // if (currentImageUrl && !currentImageUrl.startsWith('defaultImages/')) {
+        //     const oldImageRef = ref(storage, currentImageUrl);
+        //     await deleteObject(oldImageRef);
+        // }
 
         const imageStorageRef = ref(storage, `profilePictures/${newProfilePicture.name}`);
         await uploadBytes(imageStorageRef, newProfilePicture);
@@ -80,78 +82,53 @@ export default function Profile() {
     }
 
     const ChangeProfileBanner = async () => {
+        if (!user) return;
+
         const userDoc = await getDoc(doc(db, "users", user.uid));
         const currentBannerUrl = userDoc.data()?.profileBanner;
 
-        if (currentBannerUrl) {
+        if (currentBannerUrl && !currentBannerUrl.startsWith('defaultImages/')) {
             const oldBannerRef = ref(storage, currentBannerUrl);
             await deleteObject(oldBannerRef);
         }
 
-        const imageStorageRef = ref(storage, `profileBanners/${newProfileBanner.name}`);
-        await uploadBytes(imageStorageRef, newProfileBanner);
-        const imgUrl = await getDownloadURL(imageStorageRef);
+        if (newProfileBanner) {
+            const imageStorageRef = ref(storage, `profileBanners/${newProfileBanner.name}`);
+            await uploadBytes(imageStorageRef, newProfileBanner);
+            const imgUrl = await getDownloadURL(imageStorageRef);
 
-        const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, { profileBanner: imgUrl });
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, { profileBanner: imgUrl });
 
-        toast.success("Profile Banner Updated", {
-            position: "top-right",
-            theme: "dark",
-            transition: Bounce,
-        });
-    }
-
-
-    const fetchUserSongs = async (userId: string) => {
-        try {
-            const userDoc = await getDoc(doc(db, "users", userId));
-
-            if (!userDoc.exists()) return [];
-
-            const songIds = userDoc.data().songs;
-
-            // If user has no songs, return empty array
-            if (!songIds || songIds.length === 0) return [];
-
-            // Fetch each song document using the IDs
-            const songPromises = songIds.map(songId =>
-                getDoc(doc(db, "audioFiles", songId))
-            );
-
-            const songDocs = await Promise.all(songPromises);
-
-            return songDocs
-                .map(doc => {
-                    if (!doc.exists()) return null;
-                    return {
-                        id: doc.id,
-                        ...doc.data()
-                    };
-                })
-                .filter(song => song !== null);
-        } catch (error) {
-            console.error("Error fetching user songs:", error);
-            return [];
+            toast.success("Profile Banner Updated", {
+                position: "top-right",
+                theme: "dark",
+                transition: Bounce,
+            });
         }
     }
 
     const [editUsername, setEditUsername] = useState<boolean>(false)
     return (
         <div className="flex flex-col justify-center items-center h-screen">
+            <h1 className="mb-2 text-xl font-semibold">User Profile Settings</h1>
             <div className="flex flex-col w-1/2 items-center bg-slate-800 py-4 rounded-xl text-lg px-8 gap-4">
                 <ToastContainer />
-                <div className="flex flex-row gap-4 items-center">
+                <div className="flex flex-row gap-8 items-center">
                     <h1>Username: </h1>
-                    <button className="bg-sky-500 px-3 py-2 rounded-xl" onClick={() => setEditUsername(!editUsername)}><i className="fa-solid fa-pencil"></i></button>
                     <input
                         placeholder={currentUsername}
                         className="py-2 px-4 text-black rounded-md"
                         disabled={!editUsername}
                         onChange={(e) => setNewUsername(e.target.value)}
                     />
+                    <button
+                        className="bg-sky-500 px-3 py-2 rounded-xl"
+                        onClick={() => setEditUsername(!editUsername)}>
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
                     {
-                        newUsername?.length > 0 &&
+                        (newUsername?.length ?? 0) > 0 &&
                         <button onClick={changeUsername} className="bg-green-500 p-2 rounded-xl">Change</button>
                     }
                 </div>
@@ -162,10 +139,15 @@ export default function Profile() {
                         type="file"
                         accept="image/jpeg"
                         onChange={updateNewProfileImage}
+                        className="hidden"
+                        id="profileImageInput"
                     />
+                    <label htmlFor="profileBannerInput" className="bg-bg_teal1 hover:bg-bg_teal2 hover:text-black transition 250 ease-in-out p-2 rounded-xl cursor-pointer">
+                        Choose File
+                    </label>
                     <button
                         onClick={ChangeProfileImage}
-                        className="bg-green-500 p-2 rounded-xl"
+                        className="bg-green-500 p-2 rounded-xl disabled:hidden"
                         disabled={!newProfilePicture}
                     >
                         Update
@@ -178,10 +160,15 @@ export default function Profile() {
                         type="file"
                         accept="image/jpeg"
                         onChange={updateNewBanner}
+                        className="hidden"
+                        id="profileBannerInput"
                     />
+                    <label htmlFor="profileBannerInput" className="bg-bg_teal1 hover:bg-bg_teal2 hover:text-black transition 250 ease-in-out p-2 rounded-xl cursor-pointer">
+                        Choose File
+                    </label>
                     <button
                         onClick={ChangeProfileBanner}
-                        className="bg-green-500 p-2 rounded-xl"
+                        className="bg-green-500 p-2 rounded-xl disabled:hidden"
                         disabled={!newProfileBanner}
                     >
                         Update

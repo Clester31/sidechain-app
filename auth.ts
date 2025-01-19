@@ -1,8 +1,7 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth, db } from "./firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
-import { getDownloadURL, getStorage, ref, uploadBytes } from "@firebase/storage";
-import { storage } from "./firebaseConfig";
+import { getDownloadURL, getStorage, ref} from "@firebase/storage";
 
 const setDefaultProfileImages = async () => {
     const storage = getStorage();
@@ -33,10 +32,16 @@ export const signUpWithEmail = async (email: string, username: string, password:
             likes: [],
             reposts: [],
             allContent: [],
+            bio: '',
+            links: [],
         });
 
     } catch (error) {
-        throw error.message;
+        if (error instanceof Error) {
+            throw error.message;
+        } else {
+            throw String(error);
+        }
     }
 };
 
@@ -45,7 +50,11 @@ export const signInWithEmail = async (email: string, password: string) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
     } catch (error) {
-        throw error.message;
+        if (error instanceof Error) {
+            throw error.message;
+        } else {
+            throw String(error);
+        }
     }
 }
 
@@ -58,7 +67,7 @@ export const signInWithGoogle = async () => {
         const { profileUrl, bannerUrl } = await setDefaultProfileImages();
 
         await setDoc(doc(db, "users", user.uid), {
-            username: `${user.displayName.split(' ').join('')}${Math.floor(Math.random() * 900) + 100}`,
+            username: `${(user.displayName ?? 'User').split(' ').join('')}${Math.floor(Math.random() * 900) + 100}`,
             email: user.email,
             profileImage: profileUrl,
             profileBanner: bannerUrl,
@@ -66,10 +75,16 @@ export const signInWithGoogle = async () => {
             likes: [],
             reposts: [],
             allContent: [],
+            bio: '',
+            links: [],
         });
         return user;
     } catch (error) {
-        throw error.message;
+        if (error instanceof Error) {
+            throw error.message;
+        } else {
+            throw String(error);
+        }
     }
 }
 
@@ -77,6 +92,10 @@ export const logOut = async () => {
     try {
         signOut(auth);
     } catch (error) {
-        throw error.message;
+        if (error instanceof Error) {
+            throw error.message;
+        } else {
+            throw String(error);
+        }
     }
 }

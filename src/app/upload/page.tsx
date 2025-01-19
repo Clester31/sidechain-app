@@ -7,6 +7,7 @@ import { storage, db } from '../../../firebaseConfig'
 import { uploadBytes, ref, getDownloadURL } from "@firebase/storage";
 import { addDoc, updateDoc, arrayUnion, doc, collection, getDoc } from "firebase/firestore";
 import { useAuth } from "../lib/AuthContext";
+import { v4 as uuidv4 } from 'uuid'
 
 export default function Upload() {
     const [audioURL, setAudioURL] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export default function Upload() {
 
         try {
             setIsUploading(true);
-            const storageRef = ref(storage, `audio/${selectedFile.name}`);
+            const storageRef = ref(storage, `audioFiles/${selectedFile.name}`);
             await uploadBytes(storageRef, selectedFile);
             const url = await getDownloadURL(storageRef);
             setAudioURL(url);
@@ -66,17 +67,17 @@ export default function Upload() {
                 resposts: 0,
             };
 
-            const audioFileRef = await addDoc(collection(db, "audioFiles"), songData);
-            
+            const audioFileRef = await addDoc(collection(db, "audioFiles"), {
+                ...songData,
+                id: ""
+            });
+
+            // Update the document with the generated id
+            await updateDoc(audioFileRef, { id: audioFileRef.id });
+
             await updateDoc(doc(db, "users", user?.uid), {
-                songs: arrayUnion({
-                    ...songData,
-                    id: audioFileRef.id
-                }),
-                allContent: arrayUnion({
-                    ...songData,
-                    id: audioFileRef.id
-                })
+                songs: arrayUnion(audioFileRef.id),
+                allContent: arrayUnion(audioFileRef.id),
             });
 
         } catch (error) {
@@ -87,51 +88,95 @@ export default function Upload() {
     }
 
     return (
-        <div className="flex flex-col justify-center items-center h-screen">
-            <div className="login-container flex flex-col w-1/2 items-center bg-slate-800 py-4 rounded-xl text-lg px-8 gap-4">
-                <label htmlFor="songFile">File</label>
-                <input
-                    name="songFile"
-                    type="file"
-                    accept="audio/*"
-                    disabled={isUploading}
-                    onChange={handleFileSelect}
-                />
-                <label htmlFor="songCover">Song Cover</label>
-                <input
-                    name="songCover"
-                    type="file"
-                    accept="image/jpeg"
-                    disabled={isUploading}
-                    onChange={handleImageSelect}
-                />
-                
-
-                <label htmlFor="songTitle">Title</label>
-                <input className="text-black" name="songTitle" type="text" onChange={(e) => setSongTitle(e.target.value)} />
-                <label htmlFor="songTitle">Description</label>
-                <input className="text-black" name="songDesc" type="text" onChange={(e) => setSongDesc(e.target.value)} />
-                <label htmlFor="songTags">Tags (separate with comma)</label>
-                <input className="text-black" name="songTags" type="text" onChange={(e) => setSongTags(e.target.value)} />
-
-                <button
-                    onClick={handleUpload}
-                    disabled={!selectedFile || !songTitle || !songDesc || isUploading}
-                >
-                    Upload
-                </button>
-
-                {isUploading && <p>Uploading...</p>}
-
-                {audioURL && (
-                    <div>
-                        <audio ref={audioRef} controls>
-                            <source src={audioURL} type="audio/mpeg" />
-                            Your browser does not support the audio element.
-                        </audio>
+        <div className="flex flex-row justify-center items-center h-screen gap-32">
+            {/* Image Upload Component */}
+            <div className="relative w-96 h-96 border-2 border-white rounded-md flex justify-center items-center overflow-hidden hover:border-bg_teal2 transition 250 ease-in-out">
+                {!selectedImage ? (
+                    <label
+                        htmlFor="songCover"
+                        className="cursor-pointer text-white text-center hover:text-bg_teal2 transition 250 ease-in-out"
+                    >
+                        Click to upload your song cover
+                        <input
+                            id="songCover"
+                            name="songCover"
+                            type="file"
+                            accept="image/jpeg"
+                            disabled={isUploading}
+                            className="hidden"
+                            onChange={handleImageSelect}
+                        />
+                    </label>
+                ) : (
+                    <div className="relative w-full h-full">
+                        <img
+                            src={URL.createObjectURL(selectedImage)}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                        />
+                        <button
+                            onClick={() => setSelectedImage(null)}
+                            className="absolute top-2 right-2 w-8 h-8 font-bold bg-red-600 hover:bg-red-500 text-white rounded-full px-2 py-1 text-xs"
+                        >
+                            X
+                        </button>
                     </div>
                 )}
             </div>
+
+            {/* Form Inputs */}
+            <div className="flex flex-col gap-8 mt-6 w-96">
+                <input
+                    className="text-black p-2 rounded"
+                    name="songTitle"
+                    type="text"
+                    placeholder="Song Title"
+                    onChange={(e) => setSongTitle(e.target.value)}
+                />
+                <input
+                    className="text-black p-2 rounded"
+                    name="songDesc"
+                    type="text"
+                    placeholder="Song Description"
+                    onChange={(e) => setSongDesc(e.target.value)}
+                />
+                <input
+                    className="text-black p-2 rounded"
+                    name="songTags"
+                    type="text"
+                    placeholder="Tags (comma-separated, max: 5)"
+                    onChange={(e) => setSongTags(e.target.value)}
+                />
+                <div>
+                    <label
+                        htmlFor="songFile"
+                        className="flex cursor-pointer text-white justify-center px-4 py-2 rounded hover:border-bg_teal2 transition 250 rounded bg-bg_blue1 border-2 border-bg_teal1 hover:border-bg_teal2"
+                    >
+                        Select Audio File
+                    </label>
+                    <input
+                        id="songFile"
+                        name="songFile"
+                        type="file"
+                        accept="audio/*"
+                        disabled={isUploading}
+                        className="hidden" 
+                        onChange={handleFileSelect}
+                    />
+                    {selectedFile && (
+                        <p className="mt-2 text-sm text-gray-400">
+                            Selected: {selectedFile.name}
+                        </p>
+                    )}
+                </div>
+                <button
+                    onClick={handleUpload}
+                    disabled={!selectedFile || !songTitle || !songDesc || isUploading}
+                    className="flex cursor-pointer bg-bg_teal1 text-white justify-center px-4 py-2 rounded hover:bg-bg_teal2 transition 250 hover:text-black"
+                >
+                    {isUploading ? "Uploading..." : "Upload"}
+                </button>
+            </div>
         </div>
-    )
+    );
 }

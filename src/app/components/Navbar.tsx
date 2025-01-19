@@ -32,26 +32,26 @@ export default function Navbar() {
 
 
     return (
-        <div className="flex flex-row bg-bg_blue1 items-center justify-between px-8 py-2 border-b-2 border-bg_blue2">
+        <div className="w-screen flex flex-row bg-bg_blue1 items-center justify-between px-8 py-2 border-b-2 border-bg_blue2">
             <div className="w-1/6 justify-start">
                 <Image onClick={() => router.push('/')} className="cursor-pointer hover:scale-110 transition 500" src='/sidechain_icon.png' width={48} height={48} alt={'Sidechain Logo'} />
             </div>
             <div className="flex justify-center gap-4">
                 <button 
-                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8"
                 onClick={() => router.push('/')}
                 >My Shuffle</button>
                 <button 
-                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8"
                 onClick={() => router.push('/search')}
                 >Search</button>
                 
                 <button 
-                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8"
                 onClick={() => router.push('/upload')}
                 >Upload</button>
                 <button 
-                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8 w-8"
+                className="py-4 px-6 flex w-48 justify-center items-center text-center bg-bg_blue2 border-2 border-bg_teal1 hover:border-bg_teal2 transition 250 rounded-2xl h-8"
                 onClick={() => router.push(`user/${user.uid}`)}
                 >My Songs</button>
             </div>
